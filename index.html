@@ -19,6 +19,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .card-icon { font-size: 20px; color: #1a6640; margin-bottom: 8px; }
 .card h3 { font-size: 14px; font-weight: 500; color: #1a1a18; margin-bottom: 3px; }
 .card p { font-size: 12px; color: #5f5e5a; line-height: 1.5; }
+.back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-family: inherit; color: #1a6640; background: none; border: none; padding: 6px 0; cursor: pointer; }
+.back-btn:hover { text-decoration: underline; }
+#content-area .content-panel { margin-top: 0.5rem; }
 .content-panel { background: white; border: 0.5px solid rgba(0,0,0,0.12); border-radius: 12px; padding: 1.5rem; margin-top: 1rem; }
 .content-panel h2 { font-size: 18px; font-weight: 500; color: #1a1a18; }
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 0.5px solid rgba(0,0,0,0.1); }
@@ -56,11 +59,12 @@ li { line-height: 2; }
     <h1>Portal RRHH — Alphactory</h1>
   </div>
 
+  <div id="home">
   <div class="section-title">Políticas</div>
   <div class="grid">
     <div class="card" onclick="show('vacaciones', this)">
       <div class="card-icon">🏖️</div>
-      <h3>Política de vacaciones</h3>
+      <h3>Política y solicitud de vacaciones</h3>
       <p>Días disponibles, períodos y cómo solicitarlas</p>
     </div>
     <div class="card" onclick="show('asistencia', this)">
@@ -110,6 +114,8 @@ li { line-height: 2; }
       <h3>Nosotros</h3>
       <p>El equipo de Alphactory</p>
     </div>
+  </div>
+
   </div>
 
   <div id="content-area"></div>
@@ -171,7 +177,7 @@ li { line-height: 2; }
 <script>
 const contents = {
   vacaciones: {
-    title: 'Política de vacaciones',
+    title: 'Política y solicitud de vacaciones',
     badge: null,
     html: `
       <div class="block"><strong>📌 Período de uso</strong>
@@ -497,13 +503,32 @@ const contents = {
   }
 };
 
-function show(key, el) {
+let openedFromHome = false;
+function show(key) {
+  if (location.hash === '#' + key) { render(); return; }
+  openedFromHome = !location.hash;
+  location.hash = key;
+}
+function goHome() {
+  if (openedFromHome) { openedFromHome = false; history.back(); return; }
+  if (location.hash) history.pushState('', document.title, location.pathname + location.search);
+  render();
+}
+function render() {
+  const key = location.hash.slice(1);
   const c = contents[key];
-  if (!c) return;
-  document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
+  const home = document.getElementById('home');
   const area = document.getElementById('content-area');
+  closeModal();
+  if (!c) {
+    home.style.display = '';
+    area.innerHTML = '';
+    window.scrollTo(0, 0);
+    return;
+  }
+  home.style.display = 'none';
   area.innerHTML = `
+    <button type="button" class="back-btn" onclick="goHome()">← Volver al inicio</button>
     <div class="content-panel">
       ${c.badge ? `<span class="badge">✓ ${c.badge}</span>` : ''}
       <div class="panel-head">
@@ -512,12 +537,16 @@ function show(key, el) {
       </div>
       <div class="body">${c.html}</div>
     </div>
+    <button type="button" class="back-btn" style="margin-top:0.75rem" onclick="goHome()">← Volver al inicio</button>
   `;
-  area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  window.scrollTo(0, 0);
 }
+window.addEventListener('hashchange', render);
+window.addEventListener('popstate', render);
 function openModal() { document.getElementById('modal-instructivo').classList.add('open'); document.body.style.overflow = 'hidden'; }
 function closeModal() { document.getElementById('modal-instructivo').classList.remove('open'); document.body.style.overflow = ''; }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+render();
 </script>
 </body>
 </html>
